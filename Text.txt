@@ -1,0 +1,255 @@
+
+
+# អភិវឌ្ឍមុខងារ Search Product ក្នុង Submit New Report (Step 3)
+
+## គោលបំណង
+
+ក្នុងមុខងារ **Submit New Report** ត្រង់ **របាយការណ៍ខូច (Step 3)** មានផ្នែក **Search Product**។ ខ្ញុំចង់អភិវឌ្ឍមុខងារនេះឱ្យភ្ជាប់ជាមួយ API ដើម្បីទាញយក និងស្វែងរកទិន្នន័យផលិតផល (Products) ពី Server។
+
+---
+
+## API Information
+
+### Endpoint
+
+```http
+GET https://oder-backend-2.onrender.com/api/products
+```
+
+### Headers
+
+```http
+X-API-Key: my-secret-key-ChanRas-123
+```
+
+### Permission
+
+* Read Only
+* ប្រើសម្រាប់ទាញយកទិន្នន័យតែប៉ុណ្ណោះ
+* មិនអាចកែប្រែ ឬលុបទិន្នន័យបានទេ
+
+---
+
+## Expected JSON Response
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "Barcode": "12345678",
+      "ProductName": "ផលិតផលគំរូ",
+      "Price": 10.5,
+      "Cost": 8.0,
+      "ImageURL": "https://example.com/image.jpg",
+      "Tags": "CategoryA, New"
+    }
+  ]
+}
+```
+
+---
+
+## Functional Requirements
+
+### 1. Load Products from API
+
+* នៅពេលបើក Step 3 ឬ Search Product Section
+* System ត្រូវ Call API ដោយស្វ័យប្រវត្តិ
+* ទាញយកបញ្ជី Product ទាំងអស់
+
+### 2. Search Functionality
+
+អាចស្វែងរក Product តាម៖
+
+* ProductName
+* Barcode
+* Tags
+
+ការស្វែងរកត្រូវជា:
+
+* Real-time Search
+* Case-insensitive
+* Partial Match
+
+ឧទាហរណ៍:
+
+* Search "123" → រកឃើញ Barcode ដែលមាន 123
+* Search "ផលិត" → រកឃើញ ProductName ដែលមានពាក្យនេះ
+* Search "New" → រកឃើញ Product ដែលមាន Tag = New
+
+---
+
+### 3. Product Display Card
+
+បង្ហាញព័ត៌មានខាងក្រោមសម្រាប់ Product នីមួយៗ៖
+
+* Product Image
+* Product Name
+* Barcode
+* Price
+* Cost
+* Tags
+
+ប្រសិនបើ ImageURL មិនមាន ឬ Image Load Failed:
+
+* បង្ហាញ Placeholder Image
+
+---
+
+### 4. Product Selection
+
+នៅពេល User ចុចលើ Product:
+
+* រក្សាទុក Product ដែលបានជ្រើស
+* បំពេញព័ត៌មានទៅក្នុង Damage Report Form
+* បង្ហាញ Selected Product Summary
+
+---
+
+## API Connection Test Feature
+
+សូមបន្ថែមផ្នែក **API Connection Test** សម្រាប់ពិនិត្យស្ថានភាពការភ្ជាប់ API។
+
+### Test Button
+
+Button:
+
+```text
+Test API Connection
+```
+
+### Success Result
+
+```text
+✅ API Connected Successfully
+```
+
+បង្ហាញ:
+
+* Status
+* Total Products Retrieved
+* Response Time
+
+### Failed Result
+
+```text
+❌ API Connection Failed
+```
+
+បង្ហាញ:
+
+* Error Message
+* HTTP Status Code
+* Retry Button
+
+---
+
+## Error Handling
+
+សូមគ្រប់គ្រងករណីខាងក្រោម៖
+
+### Network Error
+
+```text
+Unable to connect to server.
+Please check your internet connection.
+```
+
+### API Error
+
+```text
+Failed to load products.
+Please try again later.
+```
+
+### Empty Data
+
+```text
+No products found.
+```
+
+---
+
+## Performance Requirements
+
+* Show Loading Indicator ខណៈពេលកំពុង Call API
+* Cache Product Data បន្ទាប់ពី Load ជោគជ័យ
+* Optimize Search Performance សម្រាប់ Product ច្រើន
+* Prevent Multiple Duplicate API Requests
+
+---
+
+## Deliverables
+
+សូមអនុវត្ត៖
+
+1. API Integration
+2. Search Product UI
+3. Real-time Search
+4. Product Selection
+5. API Connection Test
+6. Error Handling
+7. Loading State
+8. Empty State
+9. Performance Optimization
+10. Clean & Maintainable Code
+
+
+
+ខ្ញុំចង់ប្តូនៅពេលបំពេញ form គឺប្ដូពី  Step 1 move to Step 3 and Step 3 Move to Step 1 |
+
+ខ្ញុំចង់បែងចែកថ្ដៃសម្រាប់ form នៅក្នុង Broken Product Queue ចែកថ្ថៃគ្នាផ្សេងគ្នាសម្រាប់បង្ហាញ់
+
+តើនៅកន្លែង Production Processing នឹងតើវាស្គាល់ប្រភេទ Catagory កាសនឹង powerbank ដែរទេ ដែលប្រើនៅក្នុង Product
+បើសិនជាស្គាលសុំអោយវាចាប់ ប្រទេអោយ Production Processing ដើម្បីបង្ហាញនៃការ Processing
+
+សម្រាប់ Process button not work check for meសម្រាប់ Process button not work check for me
+
+SUBMIT NEW REPORT ប្ដូ link file សម្រាប់ SUBMIT NEW REPORT ទៅទាញ់ចេញ់ពី http://localhost:3000/step-form.html
+
+// ខ្ញុំចង់បាន button មួយសម្រាប់បង្ហាញ់នៅខាងលើនៃ http://localhost:3000/step-form.html សម្រាប់ User ​ត្រឡប់ក្រោយវបាននៅក្នុង
+button នោះមានឈ្មោះថា (បោះបង)
+
+ចង់អោយផ្លាស់ប្ដូរ fornt khmer (Khmer OS Muol Light) នៅក្នុង Incident Description បានទេ 
+
+ប្ដូកន្លែង​នេះRecord Dossier / Intelligence សម្រាប់ Font (Khmer OS Muol Light)
+
+ខ្ញុំចង់អោយអ្នកយក ថ្ថៃនេះត្រូវដាក់នៅខាងលើវិញ ហើយថ្ថៃពីមុនដាក់ខាងក្រោមបន្ទាប់ៗ Broken Product
+
+Record Dossier / Intelligence សម្រាប់ fuction នេះខ្ញុំចង់អោយអ្នក បង្ហាញ់ឈ្មោះ Producjt ដែរនៅលើ Record Dossier / Intelligence
+
+Product Processing សម្រាប់ fuction នេះគឺវាមិនស្គាល់ប្រភេទកាសទេសុំជួយ check Product Processing អោយផង វាអាចស្គាល់ seclec Auto​ បានទេ
+
+ខ្ញុំចង់បានអោយអ្នក check font​ សម្រាប់ភាសារអង់គ្លេស Use Font (!Khmer OS Siemreap) Broken Product Queue Production Processing Ivan the Terrible (Archive)
+ប្ដូអក្សរ khmer-moul ទៅជា (!Khmer OS Siemreap) បានទេ
+
+ខ្ញុំចង់ប្ដូ font ប្ដូអក្សរ khmer-moul ទៅជា (!Khmer OS Siemreap) បានទេ សម្រាប់នៅពេលដែលខ្ញុំ ចុច ditail គឺប្ដូអក្ស នៅខាងលើ box ពេល daitail 
+
+សម្រាប់ Product Catalog button គឺយើង show តែ​ admin តែមួយទ
+
+នៅកន្លែង Create New Role ខ្ញុំមិនត្រូវការជាមួយនឹង Description នោះទេ តែខ្ញុមគឺត្រូវការនៅមុខងារ Comform Password វិញ
+
+សម្រាប់ Role admin ខ្ញុំអោយ edit user បានមានកន្លែងប្ដូរ password 
+
+
+សម្រាប់ data ដែលមានពត៏មាន ដែលបាន check រូចរាល់ ត្រូវមាន Porcess សម្រាប់ទុក data​ ហើយអាច Delate សម្រាប់ នឹង​ត្រូវការ report សម្រាប់ប្រចាំខែផង​ដែល
+តែសម្រាប់តែ Admin ប៉ុណ្ណោះ
+
+
+Monthly Report Summary សម្រាប់មុខងារនេះខ្ញុំចង់អោយ export exl សម្រាប់ downlord'
+
+
+ចឹងសម្រាប់ដំណើរ dalete គឺយើងត្រូវធ្វើ ពេល delate យើងលុយហើយវាមិនបាត់នោះទេវាត្រូវលូតទៅបញ្ហាញ់  User នៅក្មុង Broken Product ហើយត្រូវមានធ្វីអ្វីសម្គាល់ សញ្ញាសម្គាល់ (Watermark): មានអក្សរធំៗចំកណ្តាលដាក់ថា "CANCELLED" ដែលមានន័យថា អ័រដ័រមួយនេះត្រូវបានគេលុបចោលហើយ
+
+
+ពេលលុបហើយត្រូវបង្ហាញ់នៅនេះ នៅក្នុង​ fuction Broken Product Queue បង្ហាញក្នុងនោះ Watermark name Dela
+
+ខ្ញុំមិនអោយវាលូតនៅលើ ប្រអប់ Broken Product Queue
+
+Broken Product Queue មិនប្រើលើកន្លែង icon PENDING PROCESSING COMPLETED នោះទេ
+
+ខ្ញុំចង់បាន អោយអ្នក បង្កើត Broken Product Queue មាន flow Process ដូចគ្នាជាមួយ Pending
+Processing
+Completed បង្ហាញ់នៅក្នុង Broken Product Queue
+ខ្ញុំចង់អោយអ្នក push code all to Github (https://github.com/khychunras123/af_system.git)

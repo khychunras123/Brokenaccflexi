@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+  <title>Take Photo - Damage Report</title>
+  
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Suwannaphum:wght@400;700;900&family=Moul&display=swap" rel="stylesheet">
+  <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    body { background-color: #000; color: #e1e2e7; font-family: 'Khmer OS Siemreap', 'Manrope', sans-serif; margin: 0; overflow: hidden; }
+  </style>
+</head>
+<body class="antialiased h-screen w-screen flex flex-col">
+  <div id="root" class="w-full h-full"></div>
+  
+  <script type="text/babel">
+    const { useState, useRef, useEffect } = React;
+
+    function TakePhotoApp() {
+      const videoRef = useRef(null);
+      const [isCameraActive, setIsCameraActive] = useState(false);
+      const [cameraStream, setCameraStream] = useState(null);
+      const [photoPreview, setPhotoPreview] = useState(null);
+      const [cameraError, setCameraError] = useState(false);
+
+      const startCamera = async () => {
+        try {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("getUserMedia missing - likely non-HTTPS");
+          }
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } 
+          });
+          setCameraStream(stream);
+          setIsCameraActive(true);
+          setPhotoPreview(null);
+          setCameraError(false);
+        } catch (err) {
+          console.error("Camera access error:", err);
+          setCameraError(true);
+        }
+      };
+
+      const handleFallbackUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => setPhotoPreview(e.target.result);
+          reader.readAsDataURL(file);
+        }
+      };
+
+      const captureLivePhoto = () => {
+        if (videoRef.current) {
+          const canvas = document.createElement('canvas');
+          
+          // Scale down image to ensure it fits in localStorage (which has a ~5MB limit)
+          let width = videoRef.current.videoWidth;
+          let height = videoRef.current.videoHeight;
+          const maxDimension = 1080;
+          
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.floor((height / width) * maxDimension);
+              width = maxDimension;
+            } else {
+              width = Math.floor((width / height) * maxDimension);
+              height = maxDimension;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(videoRef.current, 0, 0, width, height);
+          
+          // Compress as JPEG to save storage space
+          setPhotoPreview(canvas.toDataURL('image/jpeg', 0.7));
+          stopCamera();
+        }
+      };
+
+      const stopCamera = () => {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+        }
+        setIsCameraActive(false);
+        setCameraStream(null);
+      };
+
+      // Automatically attach the camera stream to the video element
+      useEffect(() => {
+        if (videoRef.current && cameraStream) {
+          videoRef.current.srcObject = cameraStream;
+        }
+      }, [cameraStream, isCameraActive, photoPreview]);
+
+      // Start the camera automatically when the page loads
+      useEffect(() => {
+        startCamera();
+        return () => stopCamera(); // Cleanup on unmount
+      }, []);
+
+      const handleSave = () => {
+        if (photoPreview) {
+          try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const type = urlParams.get('type') || 'photo';
+            
+            localStorage.setItem('capturedPhoto', photoPreview);
+            localStorage.setItem('capturedPhotoType', type);
+            window.location.href = 'index.html';
+          } catch (e) {
+            console.error("Failed to save image:", e);
+            alert("Image is too large to save. Please try recapturing or reducing quality.");
+          }
+        }
+      };
+
+      return (
+        <div className="h-full w-full flex flex-col bg-black relative">
+          
+          {/* Top Status / Header Bar */}
+          <div className="absolute top-0 w-full p-4 z-50 flex justify-between items-center bg-gradient-to-b from-black/80 to-transparent">
+            <button onClick={() => window.history.back()} className="text-white flex items-center bg-black/40 p-2 rounded-full backdrop-blur-md">
+              <span className="material-symbols-outlined text-2xl">close</span>
+            </button>
+            <div className="text-[#f3ba2f] font-bold tracking-widest uppercase bg-black/40 px-4 py-1 rounded-full backdrop-blur-md">
+              {photoPreview ? "Review Photo" : "Take Photo"}
+            </div>
+            <div className="w-10"></div> {/* Spacer to keep title centered */}
+          </div>
+
+          {/* Viewfinder / Video Feed */}
+          {!photoPreview && isCameraActive && !cameraError && (
+            <div className="flex-grow w-full relative flex items-center justify-center bg-black overflow-hidden">
+              <video ref={videoRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover"></video>
+              
+              {/* Target Brackets UI */}
+              <div className="absolute inset-x-8 inset-y-24 border-2 border-white/20 z-10 pointer-events-none">
+                <div className="w-12 h-12 border-t-4 border-l-4 border-[#f3ba2f] absolute -top-1 -left-1"></div>
+                <div className="w-12 h-12 border-t-4 border-r-4 border-[#f3ba2f] absolute -top-1 -right-1"></div>
+                <div className="w-12 h-12 border-b-4 border-l-4 border-[#f3ba2f] absolute -bottom-1 -left-1"></div>
+                <div className="w-12 h-12 border-b-4 border-r-4 border-[#f3ba2f] absolute -bottom-1 -right-1"></div>
+              </div>
+              
+              <div className="absolute bottom-32 text-white/70 font-semibold tracking-widest uppercase text-sm animate-pulse">
+                Position items in frame
+              </div>
+            </div>
+          )}
+
+          {/* Camera Error Fallback */}
+          {!photoPreview && cameraError && (
+            <div className="flex-grow w-full relative flex flex-col items-center justify-center bg-[#0B0E11] p-8 text-center mt-16">
+              <span className="material-symbols-outlined text-6xl text-red-500 mb-4">no_photography</span>
+              <h2 className="text-xl font-bold text-white mb-2">Camera Access Blocked</h2>
+              <p className="text-[#929AA5] mb-6 text-sm max-w-xs">
+                Chrome requires a secure connection (HTTPS) and your explicit permission to use the live camera.
+              </p>
+              
+              <button onClick={startCamera} className="w-full max-w-[250px] mb-4 bg-[#363C4E] text-white px-6 py-4 rounded-full font-bold uppercase tracking-wide cursor-pointer hover:bg-[#4b5363] transition-colors flex items-center justify-center">
+                <span className="material-symbols-outlined mr-2">refresh</span>
+                Retry Camera
+              </button>
+
+              <div className="text-[#929AA5] my-2 font-bold uppercase text-xs">OR</div>
+
+              <label className="w-full max-w-[250px] relative flex flex-col items-center justify-center bg-[#f3ba2f] text-black px-6 py-4 rounded-full font-bold uppercase tracking-wide cursor-pointer shadow-[0_0_20px_rgba(243,186,47,0.3)] hover:scale-105 transition-transform mt-2">
+                <span className="material-symbols-outlined text-2xl mb-1">upload_file</span>
+                Take Photo Manually
+                <input type="file" accept="image/*" capture="environment" onChange={handleFallbackUpload} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+              </label>
+            </div>
+          )}
+
+          {/* Captured Preview */}
+          {photoPreview && (
+            <div className="flex-grow w-full relative flex items-center justify-center bg-[#0B0E11]">
+              <img src={photoPreview} className="w-full h-full object-contain" alt="Captured Preview"/>
+            </div>
+          )}
+
+          {/* Bottom Controls Bar */}
+          <div className="h-32 w-full bg-black z-50 flex items-center justify-center pb-6 absolute bottom-0 bg-gradient-to-t from-black via-black to-transparent">
+            {photoPreview ? (
+              <div className="flex items-center gap-12">
+                <button onClick={startCamera} className="w-14 h-14 rounded-full bg-[#1E2329] text-white flex items-center justify-center hover:bg-[#363C4E] transition-colors">
+                  <span className="material-symbols-outlined text-2xl">refresh</span>
+                </button>
+                <button onClick={handleSave} className="w-16 h-16 rounded-full bg-[#f3ba2f] text-black flex items-center justify-center shadow-[0_0_20px_rgba(243,186,47,0.5)] hover:scale-105 transition-transform">
+                  <span className="material-symbols-outlined text-3xl">check</span>
+                </button>
+              </div>
+            ) : !cameraError ? (
+              <div className="flex items-center justify-center w-full relative">
+                {/* Shutter Button */}
+                <button onClick={captureLivePhoto} className="w-20 h-20 rounded-full border-4 border-white p-1 hover:scale-105 transition-transform">
+                  <div className="w-full h-full bg-white rounded-full active:scale-95 transition-transform flex items-center justify-center"></div>
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TakePhotoApp />);
+  </script>
+</body>
+</html>
