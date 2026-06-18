@@ -374,7 +374,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Static Files & Start
-const staticPath = 'C:/ACC_CODE/frontend';
+const staticPath = path.join(__dirname, '..', 'frontend');
 console.log('Serving static files from:', staticPath);
 app.use(express.static(staticPath, { index: 'login.html' }));
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
