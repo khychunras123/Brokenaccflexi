@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AppFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Suwannaphum:wght@400;700;900&family=Moul&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0B0E11;
+            --surface-color: #181A20;
+            --border-color: #FCD535;
+            --text-primary: #EAECEF;
+            --text-secondary: #848E9C;
+            --accent-color: #FCD535;
+            --accent-hover: #F0B90B;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Khmer OS Siemreap', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0B0E11 0%, #1a1e24 50%, #2b220d 100%);
+            background-size: cover;
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(252, 213, 53, 0.15);
+            filter: blur(100px);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .login-container {
+            background-color: rgba(24, 26, 32, 0.6);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 40px;
+            border-radius: 16px;
+            border: 1px solid rgba(252, 213, 53, 0.3);
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            z-index: 1;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .logo i { color: var(--accent-color); }
+
+        .form-group {
+            margin-bottom: 22px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-wrapper i {
+            position: absolute;
+            left: 15px;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background-color: rgba(0,0,0,0.3);
+            color: var(--text-primary);
+            outline: none;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent-color);
+            background-color: rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 4px rgba(252, 213, 53, 0.1);
+        }
+
+        .form-group input:focus + i, .form-group input:focus ~ i {
+            color: var(--accent-color);
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(90deg, #FCD535 0%, #F0B90B 100%);
+            color: #0B0E11;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 800;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(252, 213, 53, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(252, 213, 53, 0.5);
+        }
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        #message {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .credentials-hint {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: rgba(252, 213, 53, 0.05);
+            border: 1px dashed rgba(252, 213, 53, 0.3);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="logo">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            User Login
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Email/Username</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="username" required placeholder="Enter your email or username">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" required placeholder="Enter your password">
+                </div>
+            </div>
+            <button type="submit" class="btn">Login</button>
+        </form>
+
+        <div id="message"></div>
+
+        <div class="credentials-hint">
+            <strong>Test Credentials:</strong><br><br>
+            Standard User: <code>user</code> / <code>1234</code><br>
+            Inventory Checker: <code>checker</code> / <code>1234</code><br>
+            Admin: <code>admin</code> / <code>1234</code>
+        </div>
+    </div>
+
+    <script>
+        // If already logged in, redirect to dashboard immediately
+        if (localStorage.getItem('userRole')) {
+            window.location.replace('dashboard_one.html');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const msgEl = document.getElementById('message');
+
+            msgEl.style.color = 'var(--text-secondary)';
+            msgEl.innerText = 'Authenticating...';
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Login Success
+                    localStorage.setItem('userRole', data.role);
+                    localStorage.setItem('username', data.username);
+                    msgEl.style.color = '#00c77e';
+                    msgEl.innerText = 'Login successful! Redirecting to Dashboard...';
+                    
+                    setTimeout(() => {
+                        window.location.replace('dashboard_one.html');
+                    }, 500);
+                } else {
+                    // Login Failure
+                    msgEl.style.color = '#ff3336';
+                    msgEl.innerText = data.error || 'Invalid username or password.';
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                msgEl.style.color = '#ff3336';
+                msgEl.innerText = 'Server connection error. Please try again.';
+            }
+        });
+    </script>
+</body>
+</html>

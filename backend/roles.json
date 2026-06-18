@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "1780986956754",
+    "roleName": "Chunras",
+    "loginName": "Chunras",
+    "password": "$2b$10$LFF84Ct.bxofXw6UqGnz7ubjQfHzpKXmJMyvlfTchozGGKft1LJze",
+    "isUser": true,
+    "canProcess": false,
+    "isViewOnly": false,
+    "description": "Me",
+    "createdAt": "2026-06-09T06:35:56.754Z"
+  }
+]

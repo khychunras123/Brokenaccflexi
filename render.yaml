@@ -2,7 +2,7 @@ services:
   - type: web
     name: af-system
     env: node
-    rootDir: damage-report
+    rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
     envVars:
