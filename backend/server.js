@@ -92,6 +92,42 @@ const reportSchema = new mongoose.Schema({
 
 const Report = mongoose.model('Report', reportSchema);
 
+// --- Translation Helpers ---
+
+const hasKhmerText = (text = '') => /[\u1780-\u17FF]/.test(text);
+
+const fallbackTranslations = new Map([
+    ['[បញ្ចូលអត្ថបទខ្មែរ ឬ អង់គ្លេស ត្រង់នេះ]', '[Enter Khmer or English text here]'],
+    ['hello', 'សួស្តី'],
+    ['thank you', 'អរគុណ'],
+    ['how are you?', 'តើអ្នកសុខសប្បាយទេ?'],
+    ['good morning', 'អរុណសួស្តី'],
+    ['good afternoon', 'ទិវាសួស្តី'],
+    ['good evening', 'សាយ័ណ្ហសួស្តី'],
+    ['customer name', 'ឈ្មោះអតិថិជន'],
+    ['product name', 'ឈ្មោះផលិតផល'],
+    ['problem description', 'ការពិពណ៌នាបញ្ហា'],
+    ['broken product', 'ផលិតផលខូច'],
+    ['product processing', 'ដំណើរការផលិតផល'],
+    ['monthly report', 'របាយការណ៍ប្រចាំខែ'],
+    ['settings', 'ការកំណត់']
+]);
+
+function getFallbackTranslation(text, sourceLang) {
+    const trimmed = text.trim();
+    if (!trimmed) return '';
+
+    if (sourceLang === 'en') {
+        return fallbackTranslations.get(trimmed.toLowerCase()) || '';
+    }
+
+    for (const [english, khmer] of fallbackTranslations.entries()) {
+        if (khmer === trimmed) return english;
+    }
+
+    return '';
+}
+
 // --- API Routes ---
 
 // 1. Roles API
@@ -343,7 +379,46 @@ app.delete('/api/reports/:id', async (req, res) => {
     }
 });
 
-// 3. Login API
+// 3. Translation API
+app.post('/api/translate', async (req, res) => {
+    try {
+        const text = String(req.body.text || '');
+        const trimmed = text.trim();
+        if (!trimmed) return res.status(400).json({ error: 'Text is required' });
+
+        const sourceLang = hasKhmerText(trimmed) ? 'km' : 'en';
+        const targetLang = sourceLang === 'km' ? 'en' : 'km';
+        const fallback = getFallbackTranslation(trimmed, sourceLang);
+
+        try {
+            const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'ACC-Damage-Report-Translator/1.0'
+                }
+            });
+            const data = await response.json();
+            const translatedText = data?.responseData?.translatedText;
+
+            if (response.ok && translatedText && translatedText !== 'QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS') {
+                return res.json({ sourceLang, targetLang, translatedText });
+            }
+        } catch (translationError) {
+            console.error('External translation failed:', translationError.message);
+        }
+
+        if (fallback) {
+            return res.json({ sourceLang, targetLang, translatedText: fallback, fallback: true });
+        }
+
+        res.status(502).json({ error: 'Translation service is unavailable. Please try again.' });
+    } catch (error) {
+        console.error('Translation route error:', error);
+        res.status(500).json({ error: 'Internal server error during translation' });
+    }
+});
+
+// 4. Login API
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;

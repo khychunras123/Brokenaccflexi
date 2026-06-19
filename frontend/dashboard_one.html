@@ -562,6 +562,151 @@
             );
         };
 
+        const TranslatorView = () => {
+            const [inputText, setInputText] = useState('');
+            const [translatedText, setTranslatedText] = useState('');
+            const [sourceLang, setSourceLang] = useState('auto');
+            const [targetLang, setTargetLang] = useState('auto');
+            const [isTranslating, setIsTranslating] = useState(false);
+            const [status, setStatus] = useState('');
+
+            const detectLanguage = (text) => /[\u1780-\u17FF]/.test(text) ? 'km' : 'en';
+            const languageLabel = (lang) => lang === 'km' ? 'Khmer' : lang === 'en' ? 'English' : 'Auto Detect';
+
+            const runTranslate = async () => {
+                const text = inputText.trim();
+                if (!text) {
+                    setStatus('Please enter text to translate.');
+                    setTranslatedText('');
+                    return;
+                }
+
+                setIsTranslating(true);
+                setStatus('');
+
+                try {
+                    const res = await fetch('/api/translate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: inputText })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Translation failed.');
+
+                    setSourceLang(data.sourceLang);
+                    setTargetLang(data.targetLang);
+                    setTranslatedText(data.translatedText || '');
+                    setStatus(data.fallback ? 'Offline match used.' : '');
+                } catch (err) {
+                    setStatus(err.message);
+                    setTranslatedText('');
+                } finally {
+                    setIsTranslating(false);
+                }
+            };
+
+            const handleSwap = () => {
+                if (!translatedText) return;
+                setInputText(translatedText);
+                setTranslatedText(inputText);
+                setSourceLang(targetLang);
+                setTargetLang(sourceLang);
+                setStatus('');
+            };
+
+            const handleCopy = async () => {
+                if (!translatedText) return;
+                try {
+                    await navigator.clipboard.writeText(translatedText);
+                    setStatus('Copied.');
+                } catch (err) {
+                    setStatus('Copy failed.');
+                }
+            };
+
+            const handleClear = () => {
+                setInputText('');
+                setTranslatedText('');
+                setSourceLang('auto');
+                setTargetLang('auto');
+                setStatus('');
+            };
+
+            const detectedLang = inputText.trim() ? detectLanguage(inputText) : 'auto';
+            const displaySource = sourceLang === 'auto' ? detectedLang : sourceLang;
+            const displayTarget = displaySource === 'km' ? 'en' : displaySource === 'en' ? 'km' : 'auto';
+
+            return (
+                <div className="animate-fade-in space-y-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight khmer-siemreap">English / Khmer Translator</h3>
+                            <div className="text-[10px] font-black text-bn-text-secondary tracking-widest uppercase opacity-40">Language Tools / Auto_Detect</div>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                            <span className="px-4 py-2 rounded-xl bg-black/30 border border-white/5 text-bn-yellow">{languageLabel(displaySource)}</span>
+                            <button onClick={handleSwap} disabled={!translatedText} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-bn-yellow hover:text-bn-bg disabled:opacity-30 disabled:hover:bg-white/5 disabled:hover:text-white transition-all" title="Swap">
+                                <i className="fa-solid fa-right-left"></i>
+                            </button>
+                            <span className="px-4 py-2 rounded-xl bg-black/30 border border-white/5 text-emerald-400">{languageLabel(targetLang === 'auto' ? displayTarget : targetLang)}</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div className="bg-bn-surface border border-bn-border rounded-2xl shadow-2xl overflow-hidden">
+                            <div className="flex items-center justify-between px-5 py-4 bg-black/30 border-b border-white/5">
+                                <span className="text-[10px] font-black text-bn-text-secondary uppercase tracking-widest">Input</span>
+                                <span className="text-[10px] font-black text-bn-yellow uppercase tracking-widest">{languageLabel(displaySource)}</span>
+                            </div>
+                            <textarea
+                                value={inputText}
+                                onChange={(e) => {
+                                    setInputText(e.target.value);
+                                    setSourceLang('auto');
+                                    setTargetLang('auto');
+                                }}
+                                placeholder="Paste English or Khmer text here..."
+                                className="w-full min-h-[320px] bg-transparent p-6 outline-none resize-none text-sm leading-7 text-white placeholder:text-bn-text-secondary/40 khmer-siemreap"
+                            />
+                        </div>
+
+                        <div className="bg-bn-surface border border-bn-border rounded-2xl shadow-2xl overflow-hidden">
+                            <div className="flex items-center justify-between px-5 py-4 bg-black/30 border-b border-white/5">
+                                <span className="text-[10px] font-black text-bn-text-secondary uppercase tracking-widest">Translation</span>
+                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{languageLabel(targetLang === 'auto' ? displayTarget : targetLang)}</span>
+                            </div>
+                            <textarea
+                                value={translatedText}
+                                readOnly
+                                placeholder="Translation will appear here..."
+                                className="w-full min-h-[320px] bg-transparent p-6 outline-none resize-none text-sm leading-7 text-white placeholder:text-bn-text-secondary/40 khmer-siemreap"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                        <div className={`text-[10px] font-black uppercase tracking-widest ${status.includes('failed') || status.includes('unavailable') || status.includes('Please') ? 'text-red-500' : 'text-bn-text-secondary'}`}>
+                            {status}
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button onClick={handleClear} className="bg-white/5 hover:bg-white/10 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2">
+                                <i className="fa-solid fa-eraser"></i>
+                                Clear
+                            </button>
+                            <button onClick={handleCopy} disabled={!translatedText} className="bg-white/5 hover:bg-white/10 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 disabled:opacity-40">
+                                <i className="fa-solid fa-copy"></i>
+                                Copy
+                            </button>
+                            <button onClick={runTranslate} disabled={isTranslating} className="bg-bn-yellow hover:bg-bn-yellow-hover text-bn-bg px-7 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 disabled:opacity-60">
+                                {isTranslating ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-language"></i>}
+                                Translate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const MonthlyReportView = ({ reports }) => {
             const monthlyStats = useMemo(() => {
                 const stats = {};
@@ -717,6 +862,7 @@
                 { name: 'Broken Product', icon: 'fa-house', section: 'MAIN MENU' },
                 { name: 'Product Processing', icon: 'fa-spinner', section: 'MAIN MENU' },
                 { name: 'Ivan the Terrible', icon: 'fa-check-double', section: 'MAIN MENU' },
+                { name: 'Translator', icon: 'fa-language', section: 'MAIN MENU' },
                 { name: 'Monthly Report', icon: 'fa-file-lines', section: 'SYSTEM', adminOnly: true },
                 { name: 'Product Catalog', icon: 'fa-box-open', section: 'SYSTEM', isLink: true, url: 'product-list.html', adminOnly: true },
                 { name: 'User Management', icon: 'fa-users-gear', section: 'SYSTEM', adminOnly: true },
@@ -866,6 +1012,7 @@
                                 {currentView === 'Broken Product' && <ReportsView type="broken" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onProcess={handleProcess} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
                                 {currentView === 'Product Processing' && <ReportsView type="processing" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onStatusChange={handleStatusChange} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
                                 {currentView === 'Ivan the Terrible' && <ReportsView type="archive" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
+                                {currentView === 'Translator' && <TranslatorView />}
                                 {currentView === 'Monthly Report' && <MonthlyReportView reports={reports} />}
                                 {currentView === 'User Management' && <UserManagementView />}
                                 {currentView === 'Create Role' && <CreateRoleView />}
