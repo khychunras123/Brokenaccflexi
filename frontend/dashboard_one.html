@@ -724,17 +724,22 @@
                 <div className="animate-fade-in space-y-6">
                     {/* Header Controls */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-bn-surface border border-bn-border p-6 rounded-3xl shadow-xl">
-                        <div className="relative flex-1 max-w-md">
-                            <span className="absolute inset-y-0 left-4 flex items-center text-bn-text-secondary opacity-40">
-                                <i className="fa-solid fa-magnifying-glass"></i>
-                            </span>
-                            <input 
-                                type="text" 
-                                placeholder="Search operational records..." 
-                                className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-xs text-white placeholder-bn-text-secondary/50 focus:border-bn-yellow/50 focus:ring-1 focus:ring-bn-yellow/30 outline-none transition-all"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+                        <div className="flex-1 max-w-md">
+                            <div className="relative">
+                                <span className="absolute inset-y-0 left-4 flex items-center text-bn-text-secondary opacity-40">
+                                    <i className="fa-solid fa-magnifying-glass"></i>
+                                </span>
+                                <input 
+                                    type="text" 
+                                    placeholder="Search operational records..." 
+                                    className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-xs text-white placeholder-bn-text-secondary/50 focus:border-bn-yellow/50 focus:ring-1 focus:ring-bn-yellow/30 outline-none transition-all"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="text-[10px] font-bold text-bn-text-secondary mt-1.5 ml-2.5 opacity-60">
+                                Showing {filteredAndSorted.length} of {reports.length} operational records
+                            </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
                             {/* Status Filter */}
@@ -775,6 +780,7 @@
                             <table className="w-full text-left border-collapse min-w-[900px]">
                                 <thead>
                                     <tr className="border-b border-white/5 bg-black/20 text-[9px] font-black text-bn-text-secondary uppercase tracking-widest">
+                                        <th className="py-4 px-6 select-none w-12">#</th>
                                         <th onClick={() => handleSort('reportId')} className="py-4 px-6 cursor-pointer hover:text-white select-none">
                                             ID {sortField === 'reportId' && (sortOrder === 'asc' ? '▲' : '▼')}
                                         </th>
@@ -804,7 +810,7 @@
                                 </thead>
                                 <tbody className="divide-y divide-white/5 text-xs">
                                     {filteredAndSorted.length > 0 ? (
-                                        filteredAndSorted.map(report => {
+                                        filteredAndSorted.map((report, index) => {
                                             const status = (report.status || 'pending').toLowerCase();
                                             let badgeStyle = "bg-bn-yellow/10 text-bn-yellow border-bn-yellow/20";
                                             if (status === 'processing') badgeStyle = "bg-blue-500/10 text-blue-400 border-blue-500/20";
@@ -813,6 +819,7 @@
 
                                             return (
                                                 <tr key={report.reportId} className="hover:bg-white/5 transition-colors group">
+                                                    <td className="py-4.5 px-6 font-bold text-bn-text-secondary w-12">{index + 1}</td>
                                                     <td className="py-4.5 px-6 font-mono font-bold text-bn-yellow">{report.reportId}</td>
                                                     <td className="py-4.5 px-6 text-bn-text-secondary">{new Date(report.timestamp).toLocaleDateString()}</td>
                                                     <td className="py-4.5 px-6 font-bold uppercase truncate max-w-[200px]" title={report.productName}>{report.productName}</td>
@@ -1068,9 +1075,16 @@
                                         <i className="fa-solid fa-bars"></i>
                                     </button>
                                     <div className="flex flex-col">
-                                        <h2 className="text-2xl font-black tracking-tighter uppercase italic bg-gradient-to-r from-white to-bn-text-secondary bg-clip-text text-transparent">{currentView}</h2>
+                                        <h2 className="text-2xl font-black tracking-tighter uppercase italic bg-gradient-to-r from-white to-bn-text-secondary bg-clip-text text-transparent flex items-center gap-3">
+                                            {currentView}
+                                            {currentView === 'Operational Records' && (
+                                                <span className="text-xs font-black text-bn-yellow bg-bn-yellow/10 border border-bn-yellow/20 px-2.5 py-1 rounded-xl">
+                                                    {reports.length} Records
+                                                </span>
+                                            )}
+                                        </h2>
                                         <div className="flex items-center gap-2 text-[9px] font-black text-bn-text-secondary tracking-widest uppercase opacity-40">
-                                            Sector / Global / {currentView.replace(' ','_')}
+                                            Sector / Global / {currentView.replace(' ','_')} {currentView === 'Operational Records' ? `(${reports.length})` : ''}
                                         </div>
                                     </div>
                                 </div>
