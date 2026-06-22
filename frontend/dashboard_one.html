@@ -473,7 +473,7 @@
                             <h3 className="text-xl font-black text-white uppercase tracking-tight khmer-siemreap">
                                 {type === 'broken' && 'Broken Product Queue'}
                                 {type === 'processing' && 'Production Processing'}
-                                {type === 'archive' && 'Ivan the Terrible (Archive)'}
+                                {type === 'archive' && 'INSPECTED'}
                             </h3>
                             {type === 'archive' && (
                                 <div className="flex bg-bn-surface border border-bn-border p-1 rounded-xl">
@@ -727,7 +727,7 @@
             const menuItems = [
                 { name: 'Broken Product', icon: 'fa-house', section: 'MAIN MENU' },
                 { name: 'Product Processing', icon: 'fa-spinner', section: 'MAIN MENU' },
-                { name: 'Ivan the Terrible', icon: 'fa-check-double', section: 'MAIN MENU' },
+                { name: 'INSPECTED', icon: 'fa-check-double', section: 'MAIN MENU' },
                 { name: 'Monthly Report', icon: 'fa-file-lines', section: 'SYSTEM', adminOnly: true },
                 { name: 'Product Catalog', icon: 'fa-box-open', section: 'SYSTEM', isLink: true, url: 'product-list.html', adminOnly: true },
                 { name: 'User Management', icon: 'fa-users-gear', section: 'SYSTEM', adminOnly: true },
@@ -876,7 +876,7 @@
                             <div className="max-w-[1400px] mx-auto">
                                 {currentView === 'Broken Product' && <ReportsView type="broken" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onProcess={handleProcess} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
                                 {currentView === 'Product Processing' && <ReportsView type="processing" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onStatusChange={handleStatusChange} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
-                                {currentView === 'Ivan the Terrible' && <ReportsView type="archive" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
+                                {currentView === 'INSPECTED' && <ReportsView type="archive" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
                                 {currentView === 'Monthly Report' && <MonthlyReportView reports={reports} />}
                                 {currentView === 'User Management' && <UserManagementView />}
                                 {currentView === 'Create Role' && <CreateRoleView />}
