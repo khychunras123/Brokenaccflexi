@@ -317,7 +317,7 @@
             );
         };
 
-        const ReportsView = ({ type, reports, canManageReports, currentUser, onProcess, onStatusChange, onShowDetails, onDelete }) => {
+        const ReportsView = ({ type, reports, canManageReports, currentUser, onProcess, onUpdateReport, onShowDetails, onDelete }) => {
             const [activeArchiveTab, setActiveArchiveTab] = useState('RETURNED');
 
             const filteredReports = useMemo(() => {
@@ -420,26 +420,10 @@
                                     <select 
                                         className="bg-red-500/10 border border-red-500/30 text-red-400 text-[9px] font-black uppercase rounded-lg px-2 py-1 outline-none cursor-pointer"
                                         disabled={report.status === 'DELETED'}
-                                        onChange={async (e) => {
+                                        onChange={(e) => {
                                             const newType = e.target.value;
                                             if (!newType) return;
-                                            try {
-                                                await fetch(`/api/reports/${report.reportId}`, { 
-                                                    method: 'PUT', 
-                                                    headers: { 'Content-Type': 'application/json' }, 
-                                                    body: JSON.stringify({ processingProductType: newType, processingChecklist: {} }) 
-                                                });
-                                            } catch (err) {
-                                                console.error('Update type error (offline):', err);
-                                            }
-                                            const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
-                                            const idx = localReports.findIndex(r => r.reportId === report.reportId);
-                                            if (idx !== -1) {
-                                                localReports[idx].processingProductType = newType;
-                                                localReports[idx].processingChecklist = {};
-                                                localStorage.setItem('reports', JSON.stringify(localReports));
-                                            }
-                                            onStatusChange(report.reportId, 'processing'); // Trigger refresh
+                                            onUpdateReport(report.reportId, { processingProductType: newType, processingChecklist: {} });
                                         }}
                                         defaultValue=""
                                     >
@@ -465,20 +449,9 @@
                                         {isDone ? <i className="fa-solid fa-check text-xs"></i> : idx + 1}
                                     </div>
                                     <span className={`text-[11px] font-bold flex-1 ${isDone ? 'text-emerald-500' : 'text-bn-text-secondary'}`}>{task.label}</span>
-                                    {canManageReports && <input type="checkbox" className="w-4 h-4 accent-bn-yellow bg-black/40 border-white/10 rounded" disabled={report.status === 'DELETED'} checked={!!isDone} onChange={async (e) => {
+                                    {canManageReports && <input type="checkbox" className="w-4 h-4 accent-bn-yellow bg-black/40 border-white/10 rounded" disabled={report.status === 'DELETED'} checked={!!isDone} onChange={(e) => {
                                         const newChecklist = { ...checkedState, [task.id]: e.target.checked };
-                                        try {
-                                            await fetch(`/api/reports/${report.reportId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ processingChecklist: newChecklist }) });
-                                        } catch (err) {
-                                            console.error('Update checklist error (offline):', err);
-                                        }
-                                        const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
-                                        const idx = localReports.findIndex(r => r.reportId === report.reportId);
-                                        if (idx !== -1) {
-                                            localReports[idx].processingChecklist = newChecklist;
-                                            localStorage.setItem('reports', JSON.stringify(localReports));
-                                        }
-                                        onStatusChange(report.reportId, 'processing'); // Trigger refresh
+                                        onUpdateReport(report.reportId, { processingChecklist: newChecklist });
                                     }} />}
                                 </label>
                             );
@@ -577,9 +550,9 @@
                                                     {type === 'broken' && canManageReports && report.status !== 'DELETED' && <button onClick={() => onProcess(report.reportId)} className="flex-[2] bg-bn-yellow text-bn-bg py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-bn-yellow-hover shadow-lg transition-all active:scale-95">Initiate Process</button>}
                                                     {type === 'processing' && canManageReports && report.status !== 'DELETED' && (
                                                         <>
-                                                            <button onClick={() => onStatusChange(report.reportId, 'pending')} className="flex-1 bg-red-500/10 border border-red-500/20 text-red-500 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all flex items-center justify-center gap-1.5" title="Undo / Cancel Process"><i className="fa-solid fa-rotate-left"></i> Undo</button>
-                                                            <button onClick={() => onStatusChange(report.reportId, 'RETURNED')} className="flex-1 bg-white/5 border border-white/10 text-bn-text-secondary py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Return</button>
-                                                            <button onClick={() => onStatusChange(report.reportId, 'REPLACED_NEW')} className="flex-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all">Replace</button>
+                                                            <button onClick={() => onUpdateReport(report.reportId, { status: 'pending' })} className="flex-1 bg-red-500/10 border border-red-500/20 text-red-500 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500/20 transition-all flex items-center justify-center gap-1.5" title="Undo / Cancel Process"><i className="fa-solid fa-rotate-left"></i> Undo</button>
+                                                            <button onClick={() => onUpdateReport(report.reportId, { status: 'RETURNED' })} className="flex-1 bg-white/5 border border-white/10 text-bn-text-secondary py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Return</button>
+                                                            <button onClick={() => onUpdateReport(report.reportId, { status: 'REPLACED_NEW' })} className="flex-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500/20 transition-all">Replace</button>
                                                         </>
                                                     )}
                                                 </div>
@@ -711,39 +684,35 @@
                 }
             };
 
+            const handleUpdateReport = async (id, fieldsToUpdate) => {
+                // Update React State immediately (optimistic UI)
+                setReports(prev => prev.map(r => r.reportId === id ? { ...r, ...fieldsToUpdate } : r));
+
+                // Update localStorage immediately
+                const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                const idx = localReports.findIndex(r => r.reportId === id);
+                if (idx !== -1) {
+                    localReports[idx] = { ...localReports[idx], ...fieldsToUpdate };
+                    localStorage.setItem('reports', JSON.stringify(localReports));
+                }
+
+                // Update backend in background
+                try {
+                    await fetch(`/api/reports/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(fieldsToUpdate)
+                    });
+                } catch (err) {
+                    console.error('Failed to update report on backend:', err);
+                }
+            };
+
             const handleProcess = async (id) => {
                 const report = reports.find(r => r.reportId === id);
                 const type = report ? getProcessingProductType(report) : '';
-                try {
-                    await fetch(`/api/reports/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ status:'processing', processingProductType: type, processingChecklist:{} }) });
-                } catch (err) {
-                    console.error(err);
-                }
-                const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
-                const idx = localReports.findIndex(r => r.reportId === id);
-                if (idx !== -1) {
-                    localReports[idx].status = 'processing';
-                    localReports[idx].processingProductType = type;
-                    localReports[idx].processingChecklist = {};
-                    localStorage.setItem('reports', JSON.stringify(localReports));
-                }
-                await fetchReports();
+                await handleUpdateReport(id, { status: 'processing', processingProductType: type, processingChecklist: {} });
                 setCurrentView('Product Processing');
-            };
-
-            const handleStatusChange = async (id, status) => {
-                try {
-                    await fetch(`/api/reports/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ status }) });
-                } catch (err) {
-                    console.error(err);
-                }
-                const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
-                const idx = localReports.findIndex(r => r.reportId === id);
-                if (idx !== -1) {
-                    localReports[idx].status = status;
-                    localStorage.setItem('reports', JSON.stringify(localReports));
-                }
-                await fetchReports();
             };
 
             const handleDeleteReport = async (id) => {
@@ -924,7 +893,7 @@
                         <div className="flex-1 overflow-y-auto p-8 lg:p-12 custom-scrollbar">
                             <div className="max-w-[1400px] mx-auto">
                                 {currentView === 'Broken Product' && <ReportsView type="broken" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onProcess={handleProcess} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
-                                {currentView === 'Product Processing' && <ReportsView type="processing" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onStatusChange={handleStatusChange} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
+                                {currentView === 'Product Processing' && <ReportsView type="processing" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onUpdateReport={handleUpdateReport} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
                                 {currentView === 'INSPECTED' && <ReportsView type="archive" reports={filteredReports} canManageReports={canManageReports} currentUser={currentUser} onShowDetails={setSelectedReport} onDelete={handleDeleteReport} />}
                                 {currentView === 'Monthly Report' && <MonthlyReportView reports={reports} />}
                                 {currentView === 'User Management' && <UserManagementView />}
