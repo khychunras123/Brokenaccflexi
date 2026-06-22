@@ -681,19 +681,47 @@
                     const data = await res.json();
                     const sortedData = Array.isArray(data) ? data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) : [];
                     setReports(sortedData);
-                } catch (err) { console.error(err); }
+                    localStorage.setItem('reports', JSON.stringify(sortedData));
+                } catch (err) { 
+                    console.error('Fetch reports error (backend offline):', err);
+                    const localData = JSON.parse(localStorage.getItem('reports') || '[]');
+                    const sortedData = localData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    setReports(sortedData);
+                }
             };
 
             const handleProcess = async (id) => {
                 const report = reports.find(r => r.reportId === id);
                 const type = report ? getProcessingProductType(report) : '';
-                await fetch(`/api/reports/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ status:'processing', processingProductType: type, processingChecklist:{} }) });
+                try {
+                    await fetch(`/api/reports/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ status:'processing', processingProductType: type, processingChecklist:{} }) });
+                } catch (err) {
+                    console.error(err);
+                }
+                const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                const idx = localReports.findIndex(r => r.reportId === id);
+                if (idx !== -1) {
+                    localReports[idx].status = 'processing';
+                    localReports[idx].processingProductType = type;
+                    localReports[idx].processingChecklist = {};
+                    localStorage.setItem('reports', JSON.stringify(localReports));
+                }
                 await fetchReports();
                 setCurrentView('Product Processing');
             };
 
             const handleStatusChange = async (id, status) => {
-                await fetch(`/api/reports/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ status }) });
+                try {
+                    await fetch(`/api/reports/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ status }) });
+                } catch (err) {
+                    console.error(err);
+                }
+                const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                const idx = localReports.findIndex(r => r.reportId === id);
+                if (idx !== -1) {
+                    localReports[idx].status = status;
+                    localStorage.setItem('reports', JSON.stringify(localReports));
+                }
                 await fetchReports();
             };
 
@@ -701,15 +729,15 @@
                 if (!confirm('Are you sure you want to delete this report? This action cannot be undone.')) return;
                 try {
                     const res = await fetch(`/api/reports/${id}`, { method: 'DELETE' });
-                    if (res.ok) {
-                        setReports(prev => prev.filter(r => r.reportId !== id));
-                    } else {
-                        alert('Failed to delete report.');
-                    }
+                    if (!res.ok) console.warn('Failed to delete report from backend.');
                 } catch (err) {
                     console.error('Delete error:', err);
-                    alert('An error occurred while deleting.');
                 }
+                const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                const updated = localReports.filter(r => r.reportId !== id);
+                localStorage.setItem('reports', JSON.stringify(updated));
+                setReports(updated);
+                await fetchReports();
             };
 
             const filteredReports = useMemo(() => {

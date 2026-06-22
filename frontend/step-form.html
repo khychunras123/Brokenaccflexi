@@ -351,20 +351,23 @@
                             status: 'pending'
                         };
 
-                        const response = await fetch('/api/reports', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(reportData)
-                        });
+                        try {
+                            const response = await fetch('/api/reports', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(reportData)
+                            });
+                        } catch (err) {
+                            console.error('Submission error (backend offline):', err);
+                        }
 
-                        if (!response.ok) throw new Error('Failed to send report');
+                        // Save to browser localStorage to persist "in page"
+                        const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                        localReports.push(reportData);
+                        localStorage.setItem('reports', JSON.stringify(localReports));
 
                         setIsSubmitted(true);
                         setTimeout(() => { window.location.href = 'dashboard_one.html'; }, 2000);
-                    } catch (err) {
-                        console.error('Submission error:', err);
-                        alert("ការបញ្ជូនរបាយការណ៍មានបញ្ហា (Submission Error)");
-                    }
                     return;
                 }
                 setStep(step + 1);
