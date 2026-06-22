@@ -190,10 +190,21 @@
             const [step, setStep] = useState(1);
             const [isSubmitted, setIsSubmitted] = useState(false);
             const [formData, setFormData] = useState({
-                teamGroup: '', teamPage: '', branch: '', name: '', phone: '', 
-                purchaseDate: today, productName: '', barcode: '', price: '', receivedDate: today, 
-                problemDesc: '', invoice: null, photo: null,
-                teamLead: '', telegram: ''
+                teamGroup: 'ACC Store - Team Vuthea', 
+                teamPage: 'GA Tech KH', 
+                branch: 'Acc Store', 
+                name: 'Chan Dara', 
+                phone: '012345678', 
+                purchaseDate: today, 
+                productName: 'Baseus Power Bank 20000mAh', 
+                barcode: '6953156206236', 
+                price: '25.00', 
+                receivedDate: today, 
+                problemDesc: 'ផលិតផលមិនចូលថ្ម ឬសាកយឺតខ្លាំង (Device does not charge or charges very slowly)', 
+                invoice: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200" fill="%231E2329"><rect width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23F3BA2F" font-family="sans-serif" font-size="20">MOCK INVOICE SCAN</text></svg>', 
+                photo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200" fill="%231E2329"><rect width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23F3BA2F" font-family="sans-serif" font-size="20">MOCK CUSTOMER PHOTO</text></svg>',
+                teamLead: 'Vuthea', 
+                telegram: 'Vuthea'
             });
 
             const [showCamera, setShowCamera] = useState(null);
@@ -203,7 +214,11 @@
             const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
             const [filteredProducts, setFilteredProducts] = useState([]);
             const [isSearchingProducts, setIsSearchingProducts] = useState(false);
-            const [selectedProduct, setSelectedProduct] = useState(null);
+            const [selectedProduct, setSelectedProduct] = useState({
+                ProductName: 'Baseus Power Bank 20000mAh',
+                Barcode: '6953156206236',
+                Price: '25.00'
+            });
             
             // New states for API requirement
             const [isProductsLoaded, setIsProductsLoaded] = useState(false);
@@ -332,6 +347,37 @@
                 return true;
             }, [step, formData]);
 
+            const handleAutoFill = () => {
+                const dummyProduct = products.length > 0 ? products[Math.floor(Math.random() * products.length)] : {
+                    ProductName: 'Baseus Power Bank 20000mAh',
+                    Barcode: '6953156206236',
+                    Price: '25.00'
+                };
+                
+                const randomTeam = teams[Math.floor(Math.random() * teams.length)];
+                const randomStore = randomTeam.stores[Math.floor(Math.random() * randomTeam.stores.length)];
+                const branch = randomTeam.group.includes("Flexi Gear") ? "Flexi Gear" : "Acc Store";
+
+                setSelectedProduct(dummyProduct);
+                setFormData({
+                    teamGroup: randomTeam.group,
+                    teamPage: randomStore,
+                    branch: branch,
+                    name: 'Chan Dara',
+                    phone: '012345678',
+                    purchaseDate: today,
+                    productName: dummyProduct.ProductName || dummyProduct.productName,
+                    barcode: dummyProduct.Barcode || dummyProduct.barcode || '6953156206236',
+                    price: dummyProduct.Price || dummyProduct.price || '25.00',
+                    receivedDate: today,
+                    problemDesc: 'ផលិតផលមិនចូលថ្ម ឬសាកយឺតខ្លាំង (Device does not charge or charges very slowly)',
+                    invoice: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200" fill="%231E2329"><rect width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23F3BA2F" font-family="sans-serif" font-size="20">MOCK INVOICE SCAN</text></svg>',
+                    photo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200" viewBox="0 0 300 200" fill="%231E2329"><rect width="100%" height="100%"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23F3BA2F" font-family="sans-serif" font-size="20">MOCK CUSTOMER PHOTO</text></svg>',
+                    teamLead: randomTeam.group.split('-').pop().replace('Team', '').trim(),
+                    telegram: randomTeam.telegram
+                });
+            };
+
             const handleNext = async () => {
                 if (!isStepValid) {
                     if (step === 1) alert("សូមបំពេញឈ្មោះផលិតផល និងបញ្ហាដែលខូច (Please describe the product and the problem)");
@@ -400,20 +446,30 @@
 
             return (
                 <div className="max-w-md mx-auto min-h-screen flex flex-col pt-10 pb-20 px-6">
-                    <header className="mb-10 flex items-center justify-between">
+                    <header className="mb-10 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-binance-yellow rounded flex items-center justify-center">
                                 <span className="material-symbols-outlined text-binance-bg text-xl font-bold">report</span>
                             </div>
                             <h1 className="text-xl font-bold tracking-tight text-white khmer-siemreap">កត់ត្រាអីវ៉ាន់ខូច</h1>
                         </div>
-                        <a 
-                            href="dashboard_one.html" 
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-binance-gray hover:text-white rounded-xl transition-all border border-white/5 text-sm font-bold group khmer-siemreap"
-                        >
-                            <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
-                            បោះបង់
-                        </a>
+                        <div className="flex items-center gap-2">
+                            <button 
+                                onClick={handleAutoFill}
+                                className="flex items-center gap-1.5 px-3 py-2 bg-binance-yellow/10 hover:bg-binance-yellow/20 text-binance-yellow rounded-xl transition-all border border-binance-yellow/20 text-xs font-bold khmer-siemreap"
+                                type="button"
+                            >
+                                <span className="material-symbols-outlined text-sm">magic_button</span>
+                                Auto Fill
+                            </button>
+                            <a 
+                                href="dashboard_one.html" 
+                                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-binance-gray hover:text-white rounded-xl transition-all border border-white/5 text-sm font-bold group khmer-siemreap"
+                            >
+                                <span className="material-symbols-outlined text-sm group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                                បោះបង់
+                            </a>
+                        </div>
                     </header>
 
                     <StepIndicator />
