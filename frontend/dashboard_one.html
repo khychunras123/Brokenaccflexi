@@ -423,11 +423,22 @@
                                         onChange={async (e) => {
                                             const newType = e.target.value;
                                             if (!newType) return;
-                                            await fetch(`/api/reports/${report.reportId}`, { 
-                                                method: 'PUT', 
-                                                headers: { 'Content-Type': 'application/json' }, 
-                                                body: JSON.stringify({ processingProductType: newType, processingChecklist: {} }) 
-                                            });
+                                            try {
+                                                await fetch(`/api/reports/${report.reportId}`, { 
+                                                    method: 'PUT', 
+                                                    headers: { 'Content-Type': 'application/json' }, 
+                                                    body: JSON.stringify({ processingProductType: newType, processingChecklist: {} }) 
+                                                });
+                                            } catch (err) {
+                                                console.error('Update type error (offline):', err);
+                                            }
+                                            const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                                            const idx = localReports.findIndex(r => r.reportId === report.reportId);
+                                            if (idx !== -1) {
+                                                localReports[idx].processingProductType = newType;
+                                                localReports[idx].processingChecklist = {};
+                                                localStorage.setItem('reports', JSON.stringify(localReports));
+                                            }
                                             onStatusChange(report.reportId, 'processing'); // Trigger refresh
                                         }}
                                         defaultValue=""
@@ -456,7 +467,17 @@
                                     <span className={`text-[11px] font-bold flex-1 ${isDone ? 'text-emerald-500' : 'text-bn-text-secondary'}`}>{task.label}</span>
                                     {canManageReports && <input type="checkbox" className="w-4 h-4 accent-bn-yellow bg-black/40 border-white/10 rounded" disabled={report.status === 'DELETED'} checked={!!isDone} onChange={async (e) => {
                                         const newChecklist = { ...checkedState, [task.id]: e.target.checked };
-                                        await fetch(`/api/reports/${report.reportId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ processingChecklist: newChecklist }) });
+                                        try {
+                                            await fetch(`/api/reports/${report.reportId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ processingChecklist: newChecklist }) });
+                                        } catch (err) {
+                                            console.error('Update checklist error (offline):', err);
+                                        }
+                                        const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                                        const idx = localReports.findIndex(r => r.reportId === report.reportId);
+                                        if (idx !== -1) {
+                                            localReports[idx].processingChecklist = newChecklist;
+                                            localStorage.setItem('reports', JSON.stringify(localReports));
+                                        }
                                         onStatusChange(report.reportId, 'processing'); // Trigger refresh
                                     }} />}
                                 </label>
