@@ -787,6 +787,9 @@
                                         <th onClick={() => handleSort('name')} className="py-4 px-6 cursor-pointer hover:text-white select-none">
                                             Client {sortField === 'name' && (sortOrder === 'asc' ? '▲' : '▼')}
                                         </th>
+                                        <th onClick={() => handleSort('phone')} className="py-4 px-6 cursor-pointer hover:text-white select-none">
+                                            Phone {sortField === 'phone' && (sortOrder === 'asc' ? '▲' : '▼')}
+                                        </th>
                                         <th onClick={() => handleSort('branch')} className="py-4 px-6 cursor-pointer hover:text-white select-none">
                                             Branch {sortField === 'branch' && (sortOrder === 'asc' ? '▲' : '▼')}
                                         </th>
@@ -814,6 +817,7 @@
                                                     <td className="py-4.5 px-6 text-bn-text-secondary">{new Date(report.timestamp).toLocaleDateString()}</td>
                                                     <td className="py-4.5 px-6 font-bold uppercase truncate max-w-[200px]" title={report.productName}>{report.productName}</td>
                                                     <td className="py-4.5 px-6 font-semibold uppercase">{report.name}</td>
+                                                    <td className="py-4.5 px-6 font-mono text-bn-text-secondary">{report.phone || 'N/A'}</td>
                                                     <td className="py-4.5 px-6 text-bn-text-secondary uppercase">{report.branch || 'Acc Store'}</td>
                                                     <td className="py-4.5 px-6 text-bn-text-secondary">{report.teamPage}</td>
                                                     <td className="py-4.5 px-6">
