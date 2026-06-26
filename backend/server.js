@@ -5,6 +5,17 @@ const bcrypt = require('bcryptjs');
 const cors = require('cors');
 const fs = require('fs');
 
+// Load environment variables from .env
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    try {
+        process.loadEnvFile(envPath);
+        console.log('Environment variables loaded from:', envPath);
+    } catch (err) {
+        console.error('Error loading .env file:', err);
+    }
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -346,7 +357,7 @@ app.delete('/api/reports/:id', async (req, res) => {
 // 4. Login API
 app.post('/api/login', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, password, securityKey } = req.body;
         const defaults = {
             'admin': { pass: '1234', role: 'Admin' },
             'checker': { pass: '1234', role: 'InventoryChecker' },
@@ -354,6 +365,12 @@ app.post('/api/login', async (req, res) => {
         };
 
         if (defaults[username] && defaults[username].pass === password) {
+            if (defaults[username].role === 'Admin') {
+                const requiredKey = process.env.ADMIN_SECURITY_KEY;
+                if (!securityKey || securityKey !== requiredKey) {
+                    return res.status(401).json({ error: 'Invalid Admin Security Key' });
+                }
+            }
             return res.json({ success: true, username: username, role: defaults[username].role });
         }
 
@@ -364,6 +381,13 @@ app.post('/api/login', async (req, res) => {
             let userRole = 'StandardUser';
             if (user.roleName.toLowerCase().includes('admin')) userRole = 'Admin';
             else if (user.canProcess) userRole = 'InventoryChecker';
+
+            if (userRole === 'Admin') {
+                const requiredKey = process.env.ADMIN_SECURITY_KEY;
+                if (!securityKey || securityKey !== requiredKey) {
+                    return res.status(401).json({ error: 'Invalid Admin Security Key' });
+                }
+            }
             return res.json({ success: true, username: user.roleName, role: userRole });
         }
 

@@ -191,6 +191,13 @@
                     <input type="password" id="password" required placeholder="Enter your password">
                 </div>
             </div>
+            <div class="form-group" id="securityKeyGroup" style="display: none; opacity: 0; transition: all 0.3s ease; max-height: 0; overflow: hidden; margin-bottom: 0;">
+                <label for="securityKey">Admin Security Key</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="securityKey" placeholder="Enter Admin Security Key">
+                </div>
+            </div>
             <button type="submit" class="btn">Login</button>
         </form>
 
@@ -200,7 +207,7 @@
             <strong>Test Credentials:</strong><br><br>
             Standard User: <code>user</code> / <code>1234</code><br>
             Inventory Checker: <code>checker</code> / <code>1234</code><br>
-            Admin: <code>admin</code> / <code>1234</code>
+            Admin: <code>admin</code> / <code>1234</code> (Requires Security Key)
         </div>
     </div>
 
@@ -210,11 +217,46 @@
             window.location.replace('dashboard_one.html');
         }
 
+        const usernameInput = document.getElementById('username');
+        const securityKeyGroup = document.getElementById('securityKeyGroup');
+        const securityKeyInput = document.getElementById('securityKey');
+
+        function toggleSecurityKey() {
+            const val = usernameInput.value.trim().toLowerCase();
+            if (val.includes('admin')) {
+                securityKeyGroup.style.display = 'block';
+                // Force a reflow to trigger transition
+                securityKeyGroup.offsetHeight;
+                securityKeyGroup.style.maxHeight = '100px';
+                securityKeyGroup.style.opacity = '1';
+                securityKeyGroup.style.marginBottom = '22px';
+                securityKeyInput.setAttribute('required', 'true');
+            } else {
+                securityKeyGroup.style.maxHeight = '0';
+                securityKeyGroup.style.opacity = '0';
+                securityKeyGroup.style.marginBottom = '0';
+                securityKeyInput.removeAttribute('required');
+                // Hide after transition
+                setTimeout(() => {
+                    if (!usernameInput.value.trim().toLowerCase().includes('admin')) {
+                        securityKeyGroup.style.display = 'none';
+                    }
+                }, 300);
+            }
+        }
+
+        usernameInput.addEventListener('input', toggleSecurityKey);
+        // Run on load in case the browser autofilled the username
+        window.addEventListener('DOMContentLoaded', toggleSecurityKey);
+        // Run immediately as well
+        toggleSecurityKey();
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const user = document.getElementById('username').value.trim();
+            const user = usernameInput.value.trim();
             const pass = document.getElementById('password').value.trim();
+            const securityKey = securityKeyInput.value.trim();
             const msgEl = document.getElementById('message');
 
             msgEl.style.color = 'var(--text-secondary)';
@@ -224,7 +266,7 @@
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: user, password: pass })
+                    body: JSON.stringify({ username: user, password: pass, securityKey: securityKey })
                 });
 
                 const data = await response.json();
