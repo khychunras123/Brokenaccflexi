@@ -885,11 +885,41 @@
             const [selectedReport, setSelectedReport] = useState(null);
 
             useEffect(() => {
-                const userRole = localStorage.getItem('userRole');
-                const username = localStorage.getItem('username');
-                if (!userRole) { window.location.replace('login.html'); return; }
-                setCurrentUser({ name: username || 'User Name', role: userRole });
-                fetchReports();
+                const params = new URLSearchParams(window.location.search);
+                const queryKey = params.get('key');
+
+                const initializeSession = async () => {
+                    if (queryKey) {
+                        try {
+                            const res = await fetch(`/api/verify-key?key=${encodeURIComponent(queryKey)}`);
+                            const data = await res.json();
+                            if (data.valid) {
+                                localStorage.setItem('userRole', data.role);
+                                localStorage.setItem('username', data.username);
+                                setCurrentUser({ name: data.username, role: data.role });
+                            } else {
+                                localStorage.setItem('userRole', 'ViewOnly');
+                                localStorage.setItem('username', 'Guest');
+                                setCurrentUser({ name: 'Guest', role: 'ViewOnly' });
+                            }
+                            const url = new URL(window.location);
+                            url.searchParams.delete('key');
+                            window.history.replaceState({}, document.title, url.pathname + url.search);
+                        } catch (err) {
+                            console.error('Error verifying key:', err);
+                            const userRole = localStorage.getItem('userRole') || 'Admin';
+                            const username = localStorage.getItem('username') || 'Admin';
+                            setCurrentUser({ name: username, role: userRole });
+                        }
+                    } else {
+                        const userRole = localStorage.getItem('userRole') || 'Admin';
+                        const username = localStorage.getItem('username') || 'Admin';
+                        setCurrentUser({ name: username, role: userRole });
+                    }
+                    fetchReports();
+                };
+
+                initializeSession();
                 const interval = setInterval(fetchReports, 30000); // Auto-sync
                 return () => clearInterval(interval);
             }, []);
@@ -1057,7 +1087,7 @@
                                     {canManageReports ? 'Admin Access Granted' : 'View Only Mode'}
                                 </button>
                             </div>
-                            <button onClick={() => { localStorage.clear(); window.location.replace('login.html'); }} className="w-full mt-6 flex items-center justify-center gap-3 px-5 py-3 text-bn-text-secondary hover:text-red-500 transition-all duration-300 text-[10px] font-black uppercase tracking-widest group">
+                            <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="w-full mt-6 flex items-center justify-center gap-3 px-5 py-3 text-bn-text-secondary hover:text-red-500 transition-all duration-300 text-[10px] font-black uppercase tracking-widest group">
                                 <i className="fa-solid fa-right-from-bracket group-hover:-translate-x-1 transition-transform"></i>
                                 Terminate Session
                             </button>

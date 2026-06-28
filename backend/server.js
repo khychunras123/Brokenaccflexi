@@ -354,6 +354,35 @@ app.delete('/api/reports/:id', async (req, res) => {
     }
 });
 
+// Verification API for keys passed from TextAdmin Portal
+app.get('/api/verify-key', (req, res) => {
+    try {
+        const { key } = req.query;
+        if (!key) {
+            return res.json({ valid: false });
+        }
+        
+        // Match the key against env variables
+        const envKeys = Object.entries(process.env);
+        const matchedEnv = envKeys.find(([envName, envVal]) => envVal === key);
+        
+        if (matchedEnv) {
+            const [envName] = matchedEnv;
+            if (envName.startsWith('ADMIN')) {
+                return res.json({ valid: true, role: 'Admin', username: 'Admin' });
+            } else if (envName.startsWith('USER')) {
+                // If it is USER_KEY, map to StandardUser; otherwise extract username (e.g. USER1)
+                const username = envName === 'USER_KEY' ? 'StandardUser' : envName.replace('_KEY', '');
+                return res.json({ valid: true, role: 'StandardUser', username: username });
+            }
+        }
+        
+        res.json({ valid: false });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal verification error' });
+    }
+});
+
 // 4. Login API
 app.post('/api/login', async (req, res) => {
     try {
@@ -400,5 +429,5 @@ app.post('/api/login', async (req, res) => {
 // Static Files & Start
 const staticPath = path.join(__dirname, '..', 'frontend');
 console.log('Serving static files from:', staticPath);
-app.use(express.static(staticPath, { index: 'login.html' }));
+app.use(express.static(staticPath, { index: 'dashboard_one.html' }));
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
