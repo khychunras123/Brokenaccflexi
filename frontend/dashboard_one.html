@@ -879,7 +879,7 @@
         const Dashboard = () => {
             const [currentView, setCurrentView] = useState('Broken Product');
             const [reports, setReports] = useState([]);
-            const [currentUser, setCurrentUser] = useState({ name: 'User Name', role: 'StandardUser' });
+            const [currentUser, setCurrentUser] = useState({ name: 'Guest', role: 'ViewOnly' });
             const [isSidebarOpen, setIsSidebarOpen] = useState(false);
             const [searchQuery, setSearchQuery] = useState('');
             const [selectedReport, setSelectedReport] = useState(null);
@@ -907,13 +907,13 @@
                             window.history.replaceState({}, document.title, url.pathname + url.search);
                         } catch (err) {
                             console.error('Error verifying key:', err);
-                            const userRole = localStorage.getItem('userRole') || 'Admin';
-                            const username = localStorage.getItem('username') || 'Admin';
+                            const userRole = localStorage.getItem('userRole') || 'ViewOnly';
+                            const username = localStorage.getItem('username') || 'Guest';
                             setCurrentUser({ name: username, role: userRole });
                         }
                     } else {
-                        const userRole = localStorage.getItem('userRole') || 'Admin';
-                        const username = localStorage.getItem('username') || 'Admin';
+                        const userRole = localStorage.getItem('userRole') || 'ViewOnly';
+                        const username = localStorage.getItem('username') || 'Guest';
                         setCurrentUser({ name: username, role: userRole });
                     }
                     fetchReports();
@@ -1008,6 +1008,20 @@
                 { name: 'Create Role', icon: 'fa-user-shield', section: 'SYSTEM', adminOnly: true },
                 { name: 'Settings', icon: 'fa-gear', section: 'SYSTEM' }
             ];
+
+            if (currentUser.role === 'ViewOnly') {
+                return (
+                    <div className="flex flex-col items-center justify-center h-screen bg-bn-bg text-white p-6 text-center">
+                        <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center text-4xl mb-6 border border-red-500/20 shadow-[0_0_40px_rgba(239,68,68,0.2)]">
+                            <i className="fa-solid fa-ban"></i>
+                        </div>
+                        <h1 className="text-3xl font-black text-white mb-2 tracking-tight">សិទ្ធិចូលប្រើប្រាស់ត្រូវបានបដិសេធ</h1>
+                        <p className="text-gray-400 max-w-md mb-6">
+                            គណនីរបស់អ្នកគ្មានសិទ្ធិចូលប្រើប្រាស់ ឬមើលទិន្នន័យនៅក្នុងប្រព័ន្ធនេះឡើយ។ សូមទាក់ទងអ្នកគ្រប់គ្រងដើម្បីសួររក Key ត្រឹមត្រូវ។
+                        </p>
+                    </div>
+                );
+            }
 
             return (
                 <div className="flex h-screen overflow-hidden bg-bn-bg text-white selection:bg-bn-yellow selection:text-bn-bg">
