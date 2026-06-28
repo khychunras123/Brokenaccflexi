@@ -930,7 +930,13 @@
                     const data = await res.json();
                     const sortedData = Array.isArray(data) ? data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) : [];
                     setReports(sortedData);
-                    localStorage.setItem('reports', JSON.stringify(sortedData));
+                    try {
+                        // Cache only the latest 100 reports in localStorage to prevent QuotaExceededError (5MB limit)
+                        const cacheData = sortedData.slice(0, 100);
+                        localStorage.setItem('reports', JSON.stringify(cacheData));
+                    } catch (storageErr) {
+                        console.warn('LocalStorage quota exceeded, reports not fully cached:', storageErr);
+                    }
                 } catch (err) { 
                     console.error('Fetch reports error (backend offline):', err);
                     const localData = JSON.parse(localStorage.getItem('reports') || '[]');
@@ -944,11 +950,15 @@
                 setReports(prev => prev.map(r => r.reportId === id ? { ...r, ...fieldsToUpdate } : r));
 
                 // Update localStorage immediately
-                const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
-                const idx = localReports.findIndex(r => r.reportId === id);
-                if (idx !== -1) {
-                    localReports[idx] = { ...localReports[idx], ...fieldsToUpdate };
-                    localStorage.setItem('reports', JSON.stringify(localReports));
+                try {
+                    const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                    const idx = localReports.findIndex(r => r.reportId === id);
+                    if (idx !== -1) {
+                        localReports[idx] = { ...localReports[idx], ...fieldsToUpdate };
+                        localStorage.setItem('reports', JSON.stringify(localReports));
+                    }
+                } catch (e) {
+                    console.warn('Could not update reports cache in localStorage:', e);
                 }
 
                 // Update backend in background
@@ -978,9 +988,13 @@
                 } catch (err) {
                     console.error('Delete error:', err);
                 }
-                const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
-                const updated = localReports.filter(r => r.reportId !== id);
-                localStorage.setItem('reports', JSON.stringify(updated));
+                try {
+                    const localReports = JSON.parse(localStorage.getItem('reports') || '[]');
+                    const updated = localReports.filter(r => r.reportId !== id);
+                    localStorage.setItem('reports', JSON.stringify(updated));
+                } catch (e) {
+                    console.warn('Could not update reports cache in localStorage:', e);
+                }
                 setReports(updated);
                 await fetchReports();
             };
